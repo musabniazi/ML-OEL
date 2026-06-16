@@ -728,9 +728,49 @@ async function analyze() {
 
 /* ── Reset ──────────────────────────────────────────────────── */
 function resetAnalyzer() {
-  document.getElementById('results').classList.remove('visible');
+  // Hide results
+  const res = document.getElementById('results');
+  res.classList.remove('visible');
+
+  // Reset gauge
   document.getElementById('gauge-fill').style.strokeDashoffset = 2 * Math.PI * 70;
   document.getElementById('gauge-pct').textContent = '0%';
+
+  // Clear result content
+  document.getElementById('risk-badge').textContent = '—';
+  document.getElementById('risk-badge').style.background = '';
+  document.getElementById('churn-pred').textContent = '';
+  document.getElementById('seg-icon').textContent = '👤';
+  document.getElementById('seg-name').textContent = '—';
+  document.getElementById('seg-badge').textContent = '—';
+  document.getElementById('seg-badge').style.background = '';
+  document.getElementById('seg-desc').textContent = '';
+  document.getElementById('factors-list').innerHTML = '';
+  document.getElementById('reco-list').innerHTML = '';
+
+  // Reset form fields to defaults
+  document.getElementById('gender').value = 'Male';
+  document.getElementById('SeniorCitizen').value = '0';
+  document.getElementById('Partner').value = 'Yes';
+  document.getElementById('Dependents').value = 'No';
+  document.getElementById('tenure').value = '12';
+  document.getElementById('PhoneService').value = 'Yes';
+  document.getElementById('MultipleLines').value = 'No';
+  document.getElementById('InternetService').value = 'Fiber optic';
+  document.getElementById('OnlineSecurity').value = 'No';
+  document.getElementById('OnlineBackup').value = 'No';
+  document.getElementById('DeviceProtection').value = 'No';
+  document.getElementById('TechSupport').value = 'No';
+  document.getElementById('StreamingTV').value = 'No';
+  document.getElementById('StreamingMovies').value = 'No';
+  document.getElementById('Contract').value = 'Month-to-month';
+  document.getElementById('PaperlessBilling').value = 'Yes';
+  document.getElementById('PaymentMethod').value = 'Electronic check';
+  document.getElementById('MonthlyCharges').value = '70.35';
+  document.getElementById('TotalCharges').value = '845.00';
+  syncInternet();
+
+  // Scroll back to analyzer
   document.getElementById('analyzer').scrollIntoView({behavior:'smooth', block:'start'});
 }
 
