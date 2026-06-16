@@ -3,19 +3,28 @@ api/predict.py  —  Vercel Python serverless function
 POST /api/predict  →  churn probability + customer segment
 """
 
+import sys, os, warnings
+
+# Ensure repo root is on sys.path so pickle can find any custom classes
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# Suppress sklearn feature-name warning from KMeans (fitted on arrays, not DataFrames)
+warnings.filterwarnings('ignore', category=UserWarning, module='sklearn')
+
 from http.server import BaseHTTPRequestHandler
 import json
 import pickle
-import os
 import numpy as np
 import pandas as pd
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
-ROOT_DIR  = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-MODEL_DIR = os.path.join(ROOT_DIR, 'model')
+# __file__ = <repo_root>/api/predict.py  →  model dir is one level up
+_HERE     = os.path.dirname(os.path.abspath(__file__))
+MODEL_DIR = os.path.join(_HERE, '..', 'model')
 
 def _load(name):
-    with open(os.path.join(MODEL_DIR, name), 'rb') as f:
+    path = os.path.join(MODEL_DIR, name)
+    with open(path, 'rb') as f:
         return pickle.load(f)
 
 # Load once at module import — Vercel reuses warm containers
