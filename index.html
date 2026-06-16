@@ -1,0 +1,1532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Customer Churn Prediction System — ML OEL</title>
+  <meta name="description" content="Customer Churn Prediction & Segmentation System — ML Open Ended Lab, Iqra University" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Reset & tokens ─────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0A0A0A;
+      --bg2:       #111111;
+      --bg3:       #161616;
+      --cyan:      #00C9FF;
+      --cyan-dim:  #00C9FF33;
+      --cyan-glow: 0 0 30px #00C9FF55;
+      --coral:     #FF6B6B;
+      --coral-dim: #FF6B6B22;
+      --purple:    #A855F7;
+      --green:     #22C55E;
+      --yellow:    #EAB308;
+      --text:      #E5E7EB;
+      --muted:     #6B7280;
+      --border:    rgba(255,255,255,0.08);
+      --glass:     rgba(255,255,255,0.04);
+      --glass-hover: rgba(255,255,255,0.07);
+      --r:         14px;
+      --r-lg:      20px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ── Scrollbar ──────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--cyan-dim); border-radius: 3px; }
+
+    /* ── Animated gradient background ───────────────────────── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 40% at 20% 10%, #00C9FF0D 0%, transparent 60%),
+        radial-gradient(ellipse 50% 40% at 80% 80%, #FF6B6B0A 0%, transparent 55%),
+        radial-gradient(ellipse 40% 30% at 50% 50%, #A855F708 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── NAV ────────────────────────────────────────────────── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      background: rgba(10,10,10,0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 clamp(1.5rem, 5vw, 4rem);
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-logo {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--cyan);
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: -0.02em;
+    }
+    .nav-logo span { color: var(--muted); font-weight: 400; }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+    }
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+
+    /* ── Utility ─────────────────────────────────────────────── */
+    section {
+      position: relative;
+      z-index: 1;
+      padding: clamp(4rem, 8vw, 7rem) clamp(1.5rem, 8vw, 6rem);
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+
+    .section-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      margin-bottom: 0.6rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, var(--cyan-dim), transparent);
+      max-width: 120px;
+    }
+
+    .section-title {
+      font-size: clamp(1.7rem, 3.5vw, 2.4rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 0.5rem;
+      line-height: 1.15;
+    }
+
+    .section-sub {
+      color: var(--muted);
+      font-size: 1rem;
+      max-width: 560px;
+      margin-bottom: 3rem;
+    }
+
+    /* Glass card */
+    .card {
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      backdrop-filter: blur(12px);
+      transition: background 0.25s, border-color 0.25s, transform 0.25s, box-shadow 0.25s;
+    }
+    .card:hover {
+      background: var(--glass-hover);
+      border-color: rgba(0,201,255,0.18);
+      transform: translateY(-3px);
+      box-shadow: 0 12px 40px rgba(0,201,255,0.08);
+    }
+
+    /* ── HERO ────────────────────────────────────────────────── */
+    #hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding-top: 100px;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--cyan-dim);
+      border: 1px solid rgba(0,201,255,0.3);
+      border-radius: 999px;
+      padding: 0.35rem 1rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--cyan);
+      margin-bottom: 1.8rem;
+      width: fit-content;
+    }
+    .hero-badge .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--cyan);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    .hero-title {
+      font-size: clamp(2.4rem, 6vw, 5rem);
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      line-height: 1.05;
+      margin-bottom: 1rem;
+    }
+
+    .hero-title .gradient-text {
+      background: linear-gradient(135deg, var(--cyan) 0%, #92EFFD 40%, var(--purple) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-sub {
+      font-size: clamp(1rem, 2vw, 1.15rem);
+      color: var(--muted);
+      max-width: 580px;
+      margin-bottom: 2.5rem;
+    }
+
+    .hero-buttons {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.6rem;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+      border: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--cyan), #0099CC);
+      color: #000;
+    }
+    .btn-primary:hover {
+      box-shadow: 0 0 25px rgba(0,201,255,0.45);
+      transform: translateY(-2px);
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-outline:hover {
+      background: var(--glass);
+      border-color: var(--cyan);
+      color: var(--cyan);
+    }
+
+    /* ── Floating stats bar ─────────────────────────────────── */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      overflow: hidden;
+      margin-top: 5rem;
+    }
+
+    .stat-cell {
+      background: var(--bg2);
+      padding: 1.6rem 1.2rem;
+      text-align: center;
+    }
+    .stat-cell:hover { background: var(--bg3); }
+
+    .stat-number {
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      background: linear-gradient(135deg, var(--cyan), #fff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      display: block;
+    }
+
+    .stat-label {
+      font-size: 0.78rem;
+      color: var(--muted);
+      font-weight: 500;
+      margin-top: 0.2rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    /* ── Overview ───────────────────────────────────────────── */
+    .overview-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      align-items: start;
+    }
+
+    .overview-text p {
+      color: var(--muted);
+      margin-bottom: 1rem;
+      font-size: 0.97rem;
+      line-height: 1.75;
+    }
+
+    .overview-text p strong { color: var(--text); }
+
+    .overview-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+    }
+
+    .tech-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      padding: 0.8rem 1rem;
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 0.87rem;
+      transition: border-color 0.2s;
+    }
+    .tech-badge:hover { border-color: var(--cyan-dim); }
+
+    .tech-icon {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .tech-badge .tech-name { font-weight: 600; color: var(--text); }
+    .tech-badge .tech-use  { font-size: 0.77rem; color: var(--muted); }
+
+    /* ── Models ─────────────────────────────────────────────── */
+    .models-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 1.2rem;
+    }
+
+    .model-card {
+      padding: 1.4rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .model-card.best {
+      border-color: rgba(0,201,255,0.35);
+      background: linear-gradient(135deg, rgba(0,201,255,0.07) 0%, var(--glass) 100%);
+    }
+    .model-card.best::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--cyan), var(--purple));
+    }
+
+    .best-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      background: linear-gradient(135deg, var(--cyan), #0099CC);
+      color: #000;
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 0.2rem 0.65rem;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.8rem;
+    }
+
+    .model-name {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 0.3rem;
+    }
+
+    .model-params {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-bottom: 1.2rem;
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+    }
+
+    .metric-box {
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.55rem 0.7rem;
+    }
+
+    .metric-label {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 0.1rem;
+    }
+
+    .metric-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .metric-value.cyan  { color: var(--cyan); }
+    .metric-value.coral { color: var(--coral); }
+    .metric-value.green { color: var(--green); }
+    .metric-value.purple{ color: var(--purple); }
+
+    /* Progress bar inside metric */
+    .metric-bar {
+      height: 3px;
+      background: var(--border);
+      border-radius: 2px;
+      margin-top: 0.4rem;
+      overflow: hidden;
+    }
+    .metric-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 1.2s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    /* ── Clustering ─────────────────────────────────────────── */
+    .cluster-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+
+    .cluster-card {
+      padding: 2rem 1.6rem;
+      text-align: center;
+    }
+
+    .cluster-icon {
+      width: 64px; height: 64px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      margin: 0 auto 1.2rem;
+    }
+
+    .cluster-name {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 0.4rem;
+    }
+
+    .cluster-tag {
+      display: inline-block;
+      padding: 0.2rem 0.7rem;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 1rem;
+    }
+
+    .cluster-desc {
+      font-size: 0.88rem;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .cluster-seg-table {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .seg-card {
+      padding: 1rem;
+      border-radius: 10px;
+      text-align: center;
+      border: 1px solid var(--border);
+      background: var(--glass);
+    }
+
+    .seg-label { font-size: 0.75rem; color: var(--muted); margin-bottom: 0.3rem; }
+    .seg-value { font-weight: 700; font-size: 1rem; }
+
+    /* ── Gallery ─────────────────────────────────────────────── */
+    .gallery-tabs {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 2rem;
+    }
+
+    .tab-btn {
+      padding: 0.45rem 1rem;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      transition: all 0.2s;
+    }
+    .tab-btn:hover, .tab-btn.active {
+      background: var(--cyan-dim);
+      border-color: var(--cyan);
+      color: var(--cyan);
+    }
+
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+
+    .gallery-item {
+      border-radius: var(--r);
+      overflow: hidden;
+      position: relative;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      transition: transform 0.25s, box-shadow 0.25s, border-color 0.25s;
+      background: var(--bg2);
+    }
+    .gallery-item:hover {
+      transform: scale(1.02);
+      box-shadow: 0 16px 50px rgba(0,0,0,0.5);
+      border-color: rgba(0,201,255,0.3);
+    }
+
+    .gallery-item img {
+      width: 100%;
+      display: block;
+      object-fit: cover;
+      height: 200px;
+      transition: opacity 0.3s;
+    }
+
+    .gallery-overlay {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      background: linear-gradient(transparent, rgba(0,0,0,0.85));
+      padding: 2rem 1rem 0.9rem;
+      transform: translateY(5px);
+      transition: transform 0.2s;
+    }
+    .gallery-item:hover .gallery-overlay { transform: translateY(0); }
+
+    .gallery-caption {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .gallery-tag {
+      font-size: 0.68rem;
+      color: var(--cyan);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* ── Lightbox ────────────────────────────────────────────── */
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.92);
+      backdrop-filter: blur(12px);
+      z-index: 999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s;
+    }
+    .lightbox.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .lightbox img {
+      max-width: min(90vw, 900px);
+      max-height: 85vh;
+      object-fit: contain;
+      border-radius: var(--r);
+      box-shadow: 0 0 80px rgba(0,201,255,0.15);
+    }
+    .lightbox-close {
+      position: absolute;
+      top: 1.5rem; right: 1.5rem;
+      width: 44px; height: 44px;
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      color: var(--text);
+      transition: background 0.2s;
+    }
+    .lightbox-close:hover { background: var(--glass-hover); }
+
+    /* ── Insights ───────────────────────────────────────────── */
+    .insights-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+      gap: 1.2rem;
+    }
+
+    .insight-card {
+      padding: 1.6rem;
+      display: flex;
+      gap: 1rem;
+      align-items: flex-start;
+    }
+
+    .insight-icon {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+
+    .insight-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      margin-bottom: 0.35rem;
+      color: var(--text);
+    }
+
+    .insight-body {
+      font-size: 0.83rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    /* ── Recommendations ────────────────────────────────────── */
+    .reco-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .reco-item {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 1.2rem;
+      align-items: center;
+      padding: 1.2rem 1.4rem;
+    }
+
+    .reco-num {
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      background: var(--cyan-dim);
+      border: 1px solid rgba(0,201,255,0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 0.95rem;
+      color: var(--cyan);
+      flex-shrink: 0;
+    }
+
+    .reco-text strong {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 700;
+      margin-bottom: 0.2rem;
+    }
+
+    .reco-text span {
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    .reco-impact {
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.25rem 0.7rem;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+
+    /* ── Footer ─────────────────────────────────────────────── */
+    footer {
+      position: relative;
+      z-index: 1;
+      border-top: 1px solid var(--border);
+      padding: 2.5rem clamp(1.5rem, 8vw, 6rem);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: gap;
+      gap: 1rem;
+    }
+
+    .footer-left .name {
+      font-weight: 700;
+      color: var(--text);
+      font-size: 0.95rem;
+    }
+
+    .footer-left .meta {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 0.2rem;
+    }
+
+    .footer-right {
+      display: flex;
+      gap: 0.7rem;
+    }
+
+    .footer-pill {
+      padding: 0.35rem 0.9rem;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      font-size: 0.75rem;
+      color: var(--muted);
+      background: var(--glass);
+    }
+
+    /* ── Scroll-reveal ──────────────────────────────────────── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.6s cubic-bezier(0.4,0,0.2,1),
+                  transform 0.6s cubic-bezier(0.4,0,0.2,1);
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: none;
+    }
+
+    /* Stagger children */
+    .stagger > * { transition-delay: calc(var(--i, 0) * 80ms); }
+
+    /* ── Divider ─────────────────────────────────────────────── */
+    .section-divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border), transparent);
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+
+    /* ── Responsive ─────────────────────────────────────────── */
+    @media (max-width: 900px) {
+      .overview-grid   { grid-template-columns: 1fr; }
+      .cluster-grid    { grid-template-columns: 1fr; }
+      .stats-bar       { grid-template-columns: repeat(2, 1fr); }
+      .nav-links       { display: none; }
+    }
+    @media (max-width: 600px) {
+      .models-grid     { grid-template-columns: 1fr; }
+      .insights-grid   { grid-template-columns: 1fr; }
+      .stats-bar       { grid-template-columns: repeat(2, 1fr); }
+      .reco-item       { grid-template-columns: auto 1fr; }
+      .reco-impact     { display: none; }
+      .cluster-seg-table { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── NAV ─────────────────────────────────────────────────────── -->
+<nav>
+  <div class="nav-logo">ML<span>.</span>OEL <span>/ IU</span></div>
+  <ul class="nav-links">
+    <li><a href="#overview">Overview</a></li>
+    <li><a href="#models">Models</a></li>
+    <li><a href="#clustering">Clustering</a></li>
+    <li><a href="#gallery">Gallery</a></li>
+    <li><a href="#insights">Insights</a></li>
+  </ul>
+</nav>
+
+<!-- ── HERO ────────────────────────────────────────────────────── -->
+<section id="hero">
+  <div class="hero-badge">
+    <span class="dot"></span>
+    ML Open Ended Lab &nbsp;·&nbsp; Iqra University
+  </div>
+
+  <h1 class="hero-title">
+    Customer Churn<br />
+    <span class="gradient-text">Prediction System</span>
+  </h1>
+
+  <p class="hero-sub">
+    An end-to-end machine learning pipeline that predicts telecom customer churn using
+    5 supervised classifiers and segments customers into actionable groups with
+    3 unsupervised clustering algorithms.
+  </p>
+
+  <div class="hero-buttons">
+    <a href="https://github.com/musabniazi/ML-OEL" target="_blank" class="btn btn-primary">
+      <!-- GitHub icon -->
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2C6.48 2 2 6.48 2 12c0 4.42 2.87 8.17 6.84 9.49.5.09.68-.22.68-.48v-1.7C6.73 19.91 6.14 18 6.14 18c-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.89 1.52 2.34 1.08 2.91.83.09-.65.35-1.08.63-1.33-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02A9.56 9.56 0 0 1 12 6.8c.85 0 1.71.11 2.51.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10.01 10.01 0 0 0 22 12c0-5.52-4.48-10-10-10z"/>
+      </svg>
+      View on GitHub
+    </a>
+    <a href="report/ML_OEL_Report.pdf" target="_blank" class="btn btn-outline">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+      </svg>
+      View Report
+    </a>
+  </div>
+
+  <div class="stats-bar reveal">
+    <div class="stat-cell">
+      <span class="stat-number" data-target="7043" data-suffix="">0</span>
+      <span class="stat-label">Customers Analyzed</span>
+    </div>
+    <div class="stat-cell">
+      <span class="stat-number" data-target="5" data-suffix="">0</span>
+      <span class="stat-label">ML Models Trained</span>
+    </div>
+    <div class="stat-cell">
+      <span class="stat-number" data-target="3" data-suffix="">0</span>
+      <span class="stat-label">Clustering Algorithms</span>
+    </div>
+    <div class="stat-cell">
+      <span class="stat-number" data-target="21" data-suffix="">0</span>
+      <span class="stat-label">Dataset Features</span>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ── OVERVIEW ─────────────────────────────────────────────────── -->
+<section id="overview">
+  <p class="section-label">Project Overview</p>
+  <h2 class="section-title">What This Project Does</h2>
+
+  <div class="overview-grid">
+    <div class="overview-text reveal">
+      <p>
+        This project applies a <strong>complete end-to-end machine learning pipeline</strong> to the
+        IBM Telco Customer Churn dataset — 7,043 customer records with 21 features covering
+        demographics, subscribed services, contract details, and billing information.
+      </p>
+      <p>
+        The <strong>supervised learning</strong> component trains and benchmarks five classifiers to predict
+        which customers are likely to cancel their service. The best model — Random Forest —
+        achieves 80.26% accuracy and is recommended for production deployment as a live
+        monthly churn-scoring engine integrated into the company's CRM.
+      </p>
+      <p>
+        The <strong>unsupervised clustering</strong> component discovers three natural customer segments:
+        high-risk newcomers, loyal long-term customers, and a mid-tier transitional group.
+        These segments enable targeted, differentiated retention campaigns rather than
+        one-size-fits-all marketing.
+      </p>
+    </div>
+
+    <div class="overview-stack reveal stagger">
+      <div class="tech-badge" style="--i:0">
+        <div class="tech-icon" style="background:rgba(0,201,255,0.12)">🐍</div>
+        <div>
+          <div class="tech-name">Python 3.10+</div>
+          <div class="tech-use">Core language</div>
+        </div>
+      </div>
+      <div class="tech-badge" style="--i:1">
+        <div class="tech-icon" style="background:rgba(168,85,247,0.12)">🤖</div>
+        <div>
+          <div class="tech-name">Scikit-learn</div>
+          <div class="tech-use">ML models, preprocessing, clustering, PCA</div>
+        </div>
+      </div>
+      <div class="tech-badge" style="--i:2">
+        <div class="tech-icon" style="background:rgba(234,179,8,0.12)">🐼</div>
+        <div>
+          <div class="tech-name">Pandas + NumPy</div>
+          <div class="tech-use">Data loading, cleaning, manipulation</div>
+        </div>
+      </div>
+      <div class="tech-badge" style="--i:3">
+        <div class="tech-icon" style="background:rgba(34,197,94,0.12)">📊</div>
+        <div>
+          <div class="tech-name">Matplotlib + Seaborn</div>
+          <div class="tech-use">19 visualizations saved at 150 DPI</div>
+        </div>
+      </div>
+      <div class="tech-badge" style="--i:4">
+        <div class="tech-icon" style="background:rgba(255,107,107,0.12)">📓</div>
+        <div>
+          <div class="tech-name">Jupyter Notebook</div>
+          <div class="tech-use">7-section interactive analysis</div>
+        </div>
+      </div>
+      <div class="tech-badge" style="--i:5">
+        <div class="tech-icon" style="background:rgba(0,201,255,0.12)">📄</div>
+        <div>
+          <div class="tech-name">FPDF2</div>
+          <div class="tech-use">Automated 17-page PDF report</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ── MODELS ────────────────────────────────────────────────────── -->
+<section id="models">
+  <p class="section-label">Supervised Learning</p>
+  <h2 class="section-title">5 ML Models Compared</h2>
+  <p class="section-sub">All models trained on 80/20 stratified split (random_state=42) and evaluated on 1,409 held-out test samples.</p>
+
+  <div class="models-grid stagger">
+
+    <div class="card model-card best" style="--i:0">
+      <div class="best-badge">⭐ Best Model</div>
+      <div class="model-name">Random Forest</div>
+      <div class="model-params">n_estimators=100 · random_state=42</div>
+      <div class="metrics-grid">
+        <div class="metric-box">
+          <div class="metric-label">Accuracy</div>
+          <div class="metric-value cyan">80.26%</div>
+          <div class="metric-bar"><div class="metric-fill" style="width:0%;background:var(--cyan)" data-width="80.26"></div></div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-label">Precision</div>
+          <div class="metric-value purple">64.98%</div>
+          <div class="metric-bar"><div class="metric-fill" style="width:0%;background:var(--purple)" data-width="64.98"></div></div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-label">Recall</div>
+          <div class="metric-value green">52.84%</div>
+          <div class="metric-bar"><div class="metric-fill" style="width:0%;background:var(--green)" data-width="52.84"></div></div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-label">F1-Score</div>
+          <div class="metric-value coral">58.28%</div>
+          <div class="metric-bar"><div class="metric-fill" style="width:0%;background:var(--coral)" data-width="58.28"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card model-card" style="--i:1">
+      <div class="model-name">Logistic Regression</div>
+      <div class="model-params">max_iter=1000 · random_state=42</div>
+      <div class="metrics-grid">
+        <div class="metric-box">
+          <div class="metric-label">Accuracy</div>
+          <div class="metric-value cyan">80.18%</div>
+          <div class="metric-bar"><div class="metric-fill" style="width:0%;background:var(--cyan)" data-width="80.18"></div></div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-label">Precision</div>
+          <div class="metric-value purple">67.00%</div>
+          <div class="metric-bar"><div class="metric-fill" style="width:0%;background:var(--purple)" data-width="67.00"></div></div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-label">Recall</div>
+          <div class="metric-value green">52.49%</div>
+          <div class="metric-bar"><div class="metric-fill" style="width:0%;background:var(--green)" data-width="52.49"></div></div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-label">F1-Score</div>
+          <div class="metric-value coral">58.87%</div>
+          <div class="metric-bar"><div class="metric-fill" style="width:0%;background:var(--coral)" data-width="58.87"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card model-card" style="--i:2">
+      <div class="model-name">Decision Tree</div>
+      <div class="model-params">max_depth=5 · random_state=42</div>
+      <div class="metrics-grid">
+        <div class="metric-box">
+          <div class="metric-label">Accuracy</div>
+          <div class="metric-value cyan">78.92%</div>
+          <div class="metric-bar"><div class="metric-fill" style="width:0%;background:var(--cyan)" data-width="78.92"></div></div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-label">Precision</div>
+          <div class="metric-value purple">60.12%</div>
+          <div class="metric-bar"><div class="metric-fill" style="width:0%;background:var(--purple)" data-width="60.12"></div></div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-label">Recall</div>
+          <div class="metric-value green">50.36%</div>
+          <div class="metric-bar"><div class="metric-fill" style="width:0%;background:var(--green)" data-width="50.36"></div></div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-label">F1-Score</div>
+          <div class="metric-value coral">54.81%</div>
+          <div class="metric-bar"><div class="metric-fill" style="width:0%;background:var(--coral)" data-width="54.81"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card model-card" style="--i:3">
+      <div class="model-name">Naive Bayes</div>
+      <div class="model-params">GaussianNB · default params</div>
+      <div class="metrics-grid">
+        <div class="metric-box">
+          <div class="metric-label">Accuracy</div>
+          <div class="metric-value cyan">74.59%</div>
+          <div class="metric-bar"><div class="metric-fill" style="width:0%;background:var(--cyan)" data-width="74.59"></div></div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-label">Precision</div>
+          <div class="metric-value purple">54.90%</div>
+          <div class="metric-bar"><div class="metric-fill" style="width:0%;background:var(--purple)" data-width="54.90"></div></div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-label">Recall</div>
+          <div class="metric-value green">60.84%</div>
+          <div class="metric-bar"><div class="metric-fill" style="width:0%;background:var(--green)" data-width="60.84"></div></div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-label">F1-Score</div>
+          <div class="metric-value coral">57.72%</div>
+          <div class="metric-bar"><div class="metric-fill" style="width:0%;background:var(--coral)" data-width="57.72"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card model-card" style="--i:4">
+      <div class="model-name">K-Nearest Neighbour</div>
+      <div class="model-params">n_neighbors=5 · euclidean</div>
+      <div class="metrics-grid">
+        <div class="metric-box">
+          <div class="metric-label">Accuracy</div>
+          <div class="metric-value cyan">77.92%</div>
+          <div class="metric-bar"><div class="metric-fill" style="width:0%;background:var(--cyan)" data-width="77.92"></div></div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-label">Precision</div>
+          <div class="metric-value purple">59.08%</div>
+          <div class="metric-bar"><div class="metric-fill" style="width:0%;background:var(--purple)" data-width="59.08"></div></div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-label">Recall</div>
+          <div class="metric-value green">49.29%</div>
+          <div class="metric-bar"><div class="metric-fill" style="width:0%;background:var(--green)" data-width="49.29"></div></div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-label">F1-Score</div>
+          <div class="metric-value coral">53.75%</div>
+          <div class="metric-bar"><div class="metric-fill" style="width:0%;background:var(--coral)" data-width="53.75"></div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ── CLUSTERING ────────────────────────────────────────────────── -->
+<section id="clustering">
+  <p class="section-label">Unsupervised Learning</p>
+  <h2 class="section-title">Customer Segmentation</h2>
+  <p class="section-sub">Three clustering algorithms applied to discover natural customer groups without using the churn label.</p>
+
+  <div class="cluster-grid stagger">
+
+    <div class="card cluster-card" style="--i:0">
+      <div class="cluster-icon" style="background:rgba(0,201,255,0.1)">🎯</div>
+      <div class="cluster-name">K-Means Clustering</div>
+      <div class="cluster-tag" style="background:var(--cyan-dim);color:var(--cyan)">K = 3 (Elbow Method)</div>
+      <p class="cluster-desc">
+        The Elbow Method on K=1..10 identified 3 as the optimal number of clusters.
+        Produces the most interpretable and actionable customer segments. Clusters
+        visualized in 2D using PCA dimensionality reduction.
+      </p>
+      <div class="cluster-seg-table" style="margin-top:1.4rem">
+        <div class="seg-card" style="border-color:rgba(255,107,107,0.3)">
+          <div class="seg-label">Cluster 0</div>
+          <div class="seg-value" style="color:var(--coral)">High Risk</div>
+          <div class="seg-label" style="margin-top:.3rem">~45% churn</div>
+        </div>
+        <div class="seg-card" style="border-color:rgba(34,197,94,0.3)">
+          <div class="seg-label">Cluster 1</div>
+          <div class="seg-value" style="color:var(--green)">Loyal</div>
+          <div class="seg-label" style="margin-top:.3rem">~12% churn</div>
+        </div>
+        <div class="seg-card" style="border-color:rgba(234,179,8,0.3)">
+          <div class="seg-label">Cluster 2</div>
+          <div class="seg-value" style="color:var(--yellow)">Mid-Tier</div>
+          <div class="seg-label" style="margin-top:.3rem">~27% churn</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card cluster-card" style="--i:1">
+      <div class="cluster-icon" style="background:rgba(168,85,247,0.1)">🌳</div>
+      <div class="cluster-name">Agglomerative Hierarchical</div>
+      <div class="cluster-tag" style="background:rgba(168,85,247,0.12);color:var(--purple)">Ward Linkage · 3 Clusters</div>
+      <p class="cluster-desc">
+        Ward linkage minimizes within-cluster variance. A dendrogram was plotted on
+        a 300-sample subset to confirm the cut point at 3 clusters. Results broadly
+        corroborate K-Means, validating the 3-group customer structure.
+      </p>
+      <div style="margin-top:1.4rem;padding:1rem;background:rgba(168,85,247,0.06);border-radius:10px;border:1px solid rgba(168,85,247,0.15)">
+        <div style="font-size:.8rem;color:var(--purple);font-weight:600;margin-bottom:.5rem">Key Characteristics</div>
+        <div style="font-size:.8rem;color:var(--muted);line-height:1.7">
+          ✦ No cluster shape assumption<br/>
+          ✦ Dendrogram provides exploratory hierarchy<br/>
+          ✦ O(n²) complexity — best for exploration<br/>
+          ✦ Confirms K-Means segment structure
+        </div>
+      </div>
+    </div>
+
+    <div class="card cluster-card" style="--i:2">
+      <div class="cluster-icon" style="background:rgba(234,179,8,0.1)">🔍</div>
+      <div class="cluster-name">DBSCAN</div>
+      <div class="cluster-tag" style="background:rgba(234,179,8,0.1);color:var(--yellow)">eps=0.5 · min_samples=5</div>
+      <p class="cluster-desc">
+        Density-based algorithm that auto-determines cluster count and flags outliers
+        as noise (label = -1). Useful for identifying atypical customers who don't fit
+        any standard segment and may require individual case-by-case review.
+      </p>
+      <div style="margin-top:1.4rem;padding:1rem;background:rgba(234,179,8,0.06);border-radius:10px;border:1px solid rgba(234,179,8,0.15)">
+        <div style="font-size:.8rem;color:var(--yellow);font-weight:600;margin-bottom:.5rem">DBSCAN Output</div>
+        <div style="font-size:.8rem;color:var(--muted);line-height:1.7">
+          ✦ Clusters: auto-detected (1–2 dense regions)<br/>
+          ✦ Noise points: significant fraction flagged<br/>
+          ✦ Best use: outlier / anomaly detection<br/>
+          ✦ High-dim data causes density diffusion
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ── GALLERY ────────────────────────────────────────────────────── -->
+<section id="gallery">
+  <p class="section-label">Visualizations</p>
+  <h2 class="section-title">Analysis Gallery</h2>
+  <p class="section-sub">All 19 plots generated and saved at 150 DPI. Click any image to enlarge.</p>
+
+  <div class="gallery-tabs">
+    <button class="tab-btn active" onclick="filterGallery('all', this)">All</button>
+    <button class="tab-btn" onclick="filterGallery('eda', this)">EDA</button>
+    <button class="tab-btn" onclick="filterGallery('model', this)">Models</button>
+    <button class="tab-btn" onclick="filterGallery('cluster', this)">Clustering</button>
+  </div>
+
+  <div class="gallery-grid" id="gallery-grid">
+
+    <div class="gallery-item" data-cat="eda" onclick="openLightbox('outputs/01_churn_distribution.png','Churn Distribution Pie Chart')">
+      <img src="outputs/01_churn_distribution.png" alt="Churn Distribution" loading="lazy"/>
+      <div class="gallery-overlay">
+        <div class="gallery-tag">EDA · Plot 01</div>
+        <div class="gallery-caption">Churn Distribution</div>
+      </div>
+    </div>
+
+    <div class="gallery-item" data-cat="eda" onclick="openLightbox('outputs/02_churn_by_contract.png','Churn by Contract Type')">
+      <img src="outputs/02_churn_by_contract.png" alt="Churn by Contract" loading="lazy"/>
+      <div class="gallery-overlay">
+        <div class="gallery-tag">EDA · Plot 02</div>
+        <div class="gallery-caption">Churn by Contract Type</div>
+      </div>
+    </div>
+
+    <div class="gallery-item" data-cat="eda" onclick="openLightbox('outputs/03_churn_by_internet.png','Churn by Internet Service')">
+      <img src="outputs/03_churn_by_internet.png" alt="Churn by Internet" loading="lazy"/>
+      <div class="gallery-overlay">
+        <div class="gallery-tag">EDA · Plot 03</div>
+        <div class="gallery-caption">Churn by Internet Service</div>
+      </div>
+    </div>
+
+    <div class="gallery-item" data-cat="eda" onclick="openLightbox('outputs/04_tenure_distribution.png','Tenure Distribution by Churn')">
+      <img src="outputs/04_tenure_distribution.png" alt="Tenure Distribution" loading="lazy"/>
+      <div class="gallery-overlay">
+        <div class="gallery-tag">EDA · Plot 04</div>
+        <div class="gallery-caption">Tenure Distribution (KDE)</div>
+      </div>
+    </div>
+
+    <div class="gallery-item" data-cat="eda" onclick="openLightbox('outputs/05_monthly_charges_boxplot.png','Monthly Charges Boxplot')">
+      <img src="outputs/05_monthly_charges_boxplot.png" alt="Monthly Charges" loading="lazy"/>
+      <div class="gallery-overlay">
+        <div class="gallery-tag">EDA · Plot 05</div>
+        <div class="gallery-caption">Monthly Charges Boxplot</div>
+      </div>
+    </div>
+
+    <div class="gallery-item" data-cat="eda" onclick="openLightbox('outputs/06_correlation_heatmap.png','Feature Correlation Heatmap')">
+      <img src="outputs/06_correlation_heatmap.png" alt="Correlation Heatmap" loading="lazy"/>
+      <div class="gallery-overlay">
+        <div class="gallery-tag">EDA · Plot 06</div>
+        <div class="gallery-caption">Correlation Heatmap</div>
+      </div>
+    </div>
+
+    <div class="gallery-item" data-cat="eda" onclick="openLightbox('outputs/07_churn_by_payment.png','Churn Rate by Payment Method')">
+      <img src="outputs/07_churn_by_payment.png" alt="Churn by Payment" loading="lazy"/>
+      <div class="gallery-overlay">
+        <div class="gallery-tag">EDA · Plot 07</div>
+        <div class="gallery-caption">Churn by Payment Method</div>
+      </div>
+    </div>
+
+    <div class="gallery-item" data-cat="model" onclick="openLightbox('outputs/08_model_comparison.png','Model Comparison Chart')">
+      <img src="outputs/08_model_comparison.png" alt="Model Comparison" loading="lazy"/>
+      <div class="gallery-overlay">
+        <div class="gallery-tag">Models · Plot 08</div>
+        <div class="gallery-caption">All Models Comparison</div>
+      </div>
+    </div>
+
+    <div class="gallery-item" data-cat="model" onclick="openLightbox('outputs/14_feature_importance.png','Feature Importance — Random Forest')">
+      <img src="outputs/14_feature_importance.png" alt="Feature Importance" loading="lazy"/>
+      <div class="gallery-overlay">
+        <div class="gallery-tag">Models · Plot 14</div>
+        <div class="gallery-caption">Feature Importances (RF)</div>
+      </div>
+    </div>
+
+    <div class="gallery-item" data-cat="model" onclick="openLightbox('outputs/cm_random_forest.png','Confusion Matrix — Random Forest')">
+      <img src="outputs/cm_random_forest.png" alt="CM Random Forest" loading="lazy"/>
+      <div class="gallery-overlay">
+        <div class="gallery-tag">Models · CM</div>
+        <div class="gallery-caption">Confusion Matrix — Random Forest</div>
+      </div>
+    </div>
+
+    <div class="gallery-item" data-cat="model" onclick="openLightbox('outputs/cm_logistic_regression.png','Confusion Matrix — Logistic Regression')">
+      <img src="outputs/cm_logistic_regression.png" alt="CM Logistic" loading="lazy"/>
+      <div class="gallery-overlay">
+        <div class="gallery-tag">Models · CM</div>
+        <div class="gallery-caption">Confusion Matrix — Log. Reg.</div>
+      </div>
+    </div>
+
+    <div class="gallery-item" data-cat="model" onclick="openLightbox('outputs/cm_decision_tree.png','Confusion Matrix — Decision Tree')">
+      <img src="outputs/cm_decision_tree.png" alt="CM Decision Tree" loading="lazy"/>
+      <div class="gallery-overlay">
+        <div class="gallery-tag">Models · CM</div>
+        <div class="gallery-caption">Confusion Matrix — Decision Tree</div>
+      </div>
+    </div>
+
+    <div class="gallery-item" data-cat="cluster" onclick="openLightbox('outputs/09_kmeans_elbow.png','K-Means Elbow Method')">
+      <img src="outputs/09_kmeans_elbow.png" alt="Elbow Method" loading="lazy"/>
+      <div class="gallery-overlay">
+        <div class="gallery-tag">Clustering · Plot 09</div>
+        <div class="gallery-caption">K-Means Elbow Method</div>
+      </div>
+    </div>
+
+    <div class="gallery-item" data-cat="cluster" onclick="openLightbox('outputs/10_kmeans_pca.png','K-Means PCA Projection')">
+      <img src="outputs/10_kmeans_pca.png" alt="K-Means PCA" loading="lazy"/>
+      <div class="gallery-overlay">
+        <div class="gallery-tag">Clustering · Plot 10</div>
+        <div class="gallery-caption">K-Means PCA Projection</div>
+      </div>
+    </div>
+
+    <div class="gallery-item" data-cat="cluster" onclick="openLightbox('outputs/11_dendrogram.png','Hierarchical Dendrogram')">
+      <img src="outputs/11_dendrogram.png" alt="Dendrogram" loading="lazy"/>
+      <div class="gallery-overlay">
+        <div class="gallery-tag">Clustering · Plot 11</div>
+        <div class="gallery-caption">Hierarchical Dendrogram</div>
+      </div>
+    </div>
+
+    <div class="gallery-item" data-cat="cluster" onclick="openLightbox('outputs/12_agglomerative_pca.png','Agglomerative PCA Projection')">
+      <img src="outputs/12_agglomerative_pca.png" alt="Agglomerative PCA" loading="lazy"/>
+      <div class="gallery-overlay">
+        <div class="gallery-tag">Clustering · Plot 12</div>
+        <div class="gallery-caption">Agglomerative PCA Projection</div>
+      </div>
+    </div>
+
+    <div class="gallery-item" data-cat="cluster" onclick="openLightbox('outputs/13_dbscan_pca.png','DBSCAN PCA Projection')">
+      <img src="outputs/13_dbscan_pca.png" alt="DBSCAN PCA" loading="lazy"/>
+      <div class="gallery-overlay">
+        <div class="gallery-tag">Clustering · Plot 13</div>
+        <div class="gallery-caption">DBSCAN PCA Projection</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()">&#x2715;</button>
+  <img id="lightbox-img" src="" alt="" />
+</div>
+
+<div class="section-divider"></div>
+
+<!-- ── INSIGHTS ──────────────────────────────────────────────────── -->
+<section id="insights">
+  <p class="section-label">Business Insights</p>
+  <h2 class="section-title">Key Findings & Recommendations</h2>
+  <p class="section-sub">Data-driven insights translated into actionable strategies for the telecom company.</p>
+
+  <div class="insights-grid stagger" style="margin-bottom:3rem">
+
+    <div class="card insight-card" style="--i:0">
+      <div class="insight-icon" style="background:rgba(0,201,255,0.1)">⏱️</div>
+      <div>
+        <div class="insight-title">Early-Tenure Risk Window</div>
+        <div class="insight-body">Most churn occurs in the first 0–12 months. New customers need proactive engagement before dissatisfaction solidifies.</div>
+      </div>
+    </div>
+
+    <div class="card insight-card" style="--i:1">
+      <div class="insight-icon" style="background:rgba(255,107,107,0.1)">📋</div>
+      <div>
+        <div class="insight-title">Contract Type is Critical</div>
+        <div class="insight-body">Month-to-month customers churn at 3× the rate of two-year contract holders. Long-term commitment dramatically reduces churn.</div>
+      </div>
+    </div>
+
+    <div class="card insight-card" style="--i:2">
+      <div class="insight-icon" style="background:rgba(168,85,247,0.1)">💸</div>
+      <div>
+        <div class="insight-title">Price vs Perceived Value</div>
+        <div class="insight-body">Fiber optic subscribers pay the most yet churn the most — a clear value perception gap that bundled services can bridge.</div>
+      </div>
+    </div>
+
+    <div class="card insight-card" style="--i:3">
+      <div class="insight-icon" style="background:rgba(234,179,8,0.1)">💳</div>
+      <div>
+        <div class="insight-title">Payment Method Signal</div>
+        <div class="insight-body">Electronic check users churn at ~45% vs ~15–18% for auto-pay customers. Friction in payment experience predicts disengagement.</div>
+      </div>
+    </div>
+
+    <div class="card insight-card" style="--i:4">
+      <div class="insight-icon" style="background:rgba(34,197,94,0.1)">🛡️</div>
+      <div>
+        <div class="insight-title">Value-Added Services Retain</div>
+        <div class="insight-body">OnlineSecurity and TechSupport negatively correlate with churn — customers who use these services feel more invested in the platform.</div>
+      </div>
+    </div>
+
+  </div>
+
+  <h3 style="font-size:1.2rem;font-weight:700;margin-bottom:1.2rem;color:var(--text)">
+    5 Actionable Recommendations
+  </h3>
+
+  <div class="reco-list stagger">
+    <div class="card reco-item" style="--i:0">
+      <div class="reco-num">1</div>
+      <div class="reco-text">
+        <strong>Launch Early-Life Loyalty Programme</strong>
+        <span>Discounts and onboarding support in months 1–6 for all new customers (Cluster 0)</span>
+      </div>
+      <div class="reco-impact" style="background:rgba(0,201,255,0.1);color:var(--cyan);border:1px solid var(--cyan-dim)">-15–20% churn</div>
+    </div>
+
+    <div class="card reco-item" style="--i:1">
+      <div class="reco-num">2</div>
+      <div class="reco-text">
+        <strong>Incentivise Annual Contract Migration</strong>
+        <span>10–15% discount to convert month-to-month subscribers to longer commitments</span>
+      </div>
+      <div class="reco-impact" style="background:var(--coral-dim);color:var(--coral);border:1px solid rgba(255,107,107,0.2)">3× lower churn</div>
+    </div>
+
+    <div class="card reco-item" style="--i:2">
+      <div class="reco-num">3</div>
+      <div class="reco-text">
+        <strong>Bundle Value-Added Services for Fiber Optic</strong>
+        <span>Include OnlineSecurity + TechSupport to justify premium pricing for high-charge customers</span>
+      </div>
+      <div class="reco-impact" style="background:rgba(168,85,247,0.1);color:var(--purple);border:1px solid rgba(168,85,247,0.2)">Value uplift</div>
+    </div>
+
+    <div class="card reco-item" style="--i:3">
+      <div class="reco-num">4</div>
+      <div class="reco-text">
+        <strong>Electronic Check Migration Campaign</strong>
+        <span>Offer $3–$5 monthly credit to switch from e-check to auto-pay via bank transfer or card</span>
+      </div>
+      <div class="reco-impact" style="background:rgba(234,179,8,0.1);color:var(--yellow);border:1px solid rgba(234,179,8,0.2)">-10pp churn</div>
+    </div>
+
+    <div class="card reco-item" style="--i:4">
+      <div class="reco-num">5</div>
+      <div class="reco-text">
+        <strong>Deploy Random Forest as Live Churn Scorer</strong>
+        <span>Integrate model into CRM for monthly risk scoring — flag P(churn) &gt; 0.55 for retention outreach</span>
+      </div>
+      <div class="reco-impact" style="background:rgba(34,197,94,0.1);color:var(--green);border:1px solid rgba(34,197,94,0.2)">ROI-trackable</div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ── FOOTER ─────────────────────────────────────────────────────── -->
+<footer>
+  <div class="footer-left">
+    <div class="name">Musab Khan &nbsp;·&nbsp; F2022065180</div>
+    <div class="meta">Introduction to Machine Learning &nbsp;·&nbsp; Instructor: Abdul Baqi Malik &nbsp;·&nbsp; Iqra University, Chak Shahzad Campus</div>
+  </div>
+  <div class="footer-right">
+    <span class="footer-pill">Python 3.10+</span>
+    <span class="footer-pill">Scikit-learn</span>
+    <span class="footer-pill">Jupyter</span>
+  </div>
+</footer>
+
+<!-- ── SCRIPTS ────────────────────────────────────────────────────── -->
+<script>
+  /* Scroll-reveal */
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        revealObserver.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.08 });
+
+  document.querySelectorAll('.reveal, .card, .gallery-item, .tech-badge, .reco-item, .insight-card, .cluster-card')
+    .forEach(el => { el.classList.add('reveal'); revealObserver.observe(el); });
+
+  /* Animated counters */
+  const counterObserver = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (!e.isIntersecting) return;
+      const el = e.target;
+      const target = +el.dataset.target;
+      const duration = 1600;
+      const start = performance.now();
+      const tick = (now) => {
+        const progress = Math.min((now - start) / duration, 1);
+        const ease = 1 - Math.pow(1 - progress, 3);
+        el.textContent = Math.floor(ease * target).toLocaleString();
+        if (progress < 1) requestAnimationFrame(tick);
+        else el.textContent = target.toLocaleString();
+      };
+      requestAnimationFrame(tick);
+      counterObserver.unobserve(el);
+    });
+  }, { threshold: 0.5 });
+
+  document.querySelectorAll('[data-target]').forEach(el => counterObserver.observe(el));
+
+  /* Metric bar animation */
+  const barObserver = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (!e.isIntersecting) return;
+      e.target.querySelectorAll('.metric-fill').forEach(bar => {
+        bar.style.width = bar.dataset.width + '%';
+      });
+      barObserver.unobserve(e.target);
+    });
+  }, { threshold: 0.2 });
+
+  document.querySelectorAll('.model-card').forEach(el => barObserver.observe(el));
+
+  /* Gallery filter */
+  function filterGallery(cat, btn) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.gallery-item').forEach(item => {
+      const show = cat === 'all' || item.dataset.cat === cat;
+      item.style.display = show ? 'block' : 'none';
+    });
+  }
+
+  /* Lightbox */
+  function openLightbox(src, alt) {
+    const lb = document.getElementById('lightbox');
+    const img = document.getElementById('lightbox-img');
+    img.src = src;
+    img.alt = alt;
+    lb.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeLightbox() {
+    document.getElementById('lightbox').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+
+  /* Stagger delays for grid children */
+  document.querySelectorAll('.stagger').forEach(parent => {
+    [...parent.children].forEach((child, i) => {
+      child.style.setProperty('--i', i);
+      child.style.transitionDelay = `${i * 80}ms`;
+    });
+  });
+</script>
+
+</body>
+</html>
